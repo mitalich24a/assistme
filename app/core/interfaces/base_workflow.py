@@ -23,11 +23,11 @@ class BaseWorkflow(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def execute(
+    async def build(
         self,
         context: WorkflowContext,
     ) -> None:
-        """Execute the workflow."""
+        """build the workflow."""
         raise NotImplementedError
 
     @abstractmethod

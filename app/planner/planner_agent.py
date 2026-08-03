@@ -1,13 +1,14 @@
+from app.constants.capabilities import Capabilities
 from app.core.interfaces.base_agent import BaseAgent
 from app.core.interfaces.base_llm_provider import BaseLLMProvider
 from app.execution.workflow_context import WorkflowContext
+from app.prompts.planner_prompt import PLANNER_SYSTEM_PROMPT
 from app.schemas.agent_result import AgentResult
 
 
 class PlannerAgent(BaseAgent):
     """
-    Responsible for converting a high-level goal into
-    an executable plan.
+    Generates an implementation plan from a design document.
     """
 
     def __init__(
@@ -22,13 +23,12 @@ class PlannerAgent(BaseAgent):
 
     @property
     def description(self) -> str:
-        return "Generates execution plans using an LLM."
-    
+        return "Generates engineering implementation plans."
+
     @property
     def capabilities(self) -> list[str]:
         return [
-            "planning",
-            "task-decomposition",
+            Capabilities.PLANNING,
         ]
 
     async def run(
@@ -37,14 +37,17 @@ class PlannerAgent(BaseAgent):
         **kwargs,
     ) -> AgentResult:
 
-        prompt = kwargs.get("prompt", "")
+        design_text = context.input_data["design_text"]
 
-        response = await self._llm_provider.generate(prompt)
+        response = await self._llm_provider.generate(
+            system_prompt=PLANNER_SYSTEM_PROMPT,
+            user_prompt=design_text,
+        )
 
         return AgentResult(
             success=True,
             data={
-                "plan": response
+                "raw_plan": response,
             },
-            message="Planning completed successfully."
+            message="Planning completed successfully.",
         )

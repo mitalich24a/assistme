@@ -15,10 +15,8 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     async def generate(
         self,
-        prompt: str,
-        **kwargs: Any,
+        system_prompt: str,
+        user_prompt: str,
+        **kwargs,
     ) -> str:
-        """
-        Generate an LLM response.
-        """
         raise NotImplementedError

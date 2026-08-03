@@ -22,11 +22,15 @@ class OllamaProvider(BaseLLMProvider):
         response = ollama.chat(
             model=settings.ollama_model,
             messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
+                    {
+                        "role":"system",
+                        "content": system_prompt,
+                    },
+                    {
+                        "role":"user",
+                        "content": user_prompt,
+                    }
+                ]
         )
 
         return response["message"]["content"]

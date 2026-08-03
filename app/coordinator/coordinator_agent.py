@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.execution.workflow_context import WorkflowContext
 from app.registry.agent_registry import AgentRegistry
 from app.schemas.agent_result import AgentResult
@@ -5,8 +7,8 @@ from app.schemas.agent_result import AgentResult
 
 class CoordinatorAgent:
     """
-    Coordinates workflow execution by delegating work
-    to specialized agents.
+    Coordinates workflow execution by delegating
+    work to specialized agents.
     """
 
     def __init__(
@@ -19,10 +21,10 @@ class CoordinatorAgent:
         self,
         context: WorkflowContext,
         capability: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> AgentResult:
         """
-        Find the appropriate agent and execute it.
+        Find an agent by capability and execute it.
         """
 
         agent = self._registry.find(capability)

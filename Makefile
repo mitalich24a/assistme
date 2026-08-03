@@ -1,5 +1,5 @@
 run:
-	uvicorn app.main:app --reload
+	python3 run.py
 
 freeze:
 	pip3 freeze > requirements.txt

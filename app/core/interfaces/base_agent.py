@@ -6,15 +6,24 @@ from app.schemas.agent_result import AgentResult
 
 
 class BaseAgent(ABC):
+    """
+    Base contract for all AI agents.
+    """
 
     @property
     @abstractmethod
     def name(self) -> str:
+        """
+        Unique agent name.
+        """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def description(self) -> str:
+        """
+        Short description of the agent.
+        """
         raise NotImplementedError
 
     @property
@@ -31,4 +40,7 @@ class BaseAgent(ABC):
         context: WorkflowContext,
         **kwargs: Any,
     ) -> AgentResult:
+        """
+        Execute the assigned task.
+        """
         raise NotImplementedError
