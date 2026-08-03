@@ -5,6 +5,9 @@ from app.execution.workflow_context import WorkflowContext
 from app.prompts.planner_prompt import PLANNER_SYSTEM_PROMPT
 from app.schemas.agent_result import AgentResult
 
+from app.schemas.planning_result import PlanningResult
+from app.utils.parsers.json_parser import JsonParser
+
 
 class PlannerAgent(BaseAgent):
     """
@@ -44,10 +47,15 @@ class PlannerAgent(BaseAgent):
             user_prompt=design_text,
         )
 
+        planning = JsonParser.parse(
+            response=response,
+            schema=PlanningResult,
+        )
+
         return AgentResult(
             success=True,
             data={
-                "raw_plan": response,
+                "planning": planning.model_dump(),
             },
             message="Planning completed successfully.",
         )
