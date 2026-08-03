@@ -20,6 +20,9 @@ class RuntimeExecutor:
         workflow: WorkflowDefinition,
         context: WorkflowContext,
     ) -> list[AgentResult]:
+        """
+        Execute all workflow steps sequentially.
+        """
 
         results: list[AgentResult] = []
 

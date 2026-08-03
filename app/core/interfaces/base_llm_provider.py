@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 
 class BaseLLMProvider(ABC):
@@ -17,6 +16,8 @@ class BaseLLMProvider(ABC):
         self,
         system_prompt: str,
         user_prompt: str,
-        **kwargs,
     ) -> str:
+        """
+        Generate a response from the LLM.
+        """
         raise NotImplementedError

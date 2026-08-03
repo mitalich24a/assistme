@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.execution.workflow_context import WorkflowContext
+from app.execution.workflow_definition import WorkflowDefinition
 
 
 class BaseWorkflow(ABC):
@@ -26,8 +27,10 @@ class BaseWorkflow(ABC):
     async def build(
         self,
         context: WorkflowContext,
-    ) -> None:
-        """build the workflow."""
+    ) -> WorkflowDefinition:
+        """
+        Build the workflow definition.
+        """
         raise NotImplementedError
 
     @abstractmethod

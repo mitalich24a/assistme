@@ -1,7 +1,7 @@
 import ollama
 
-from app.core.interfaces.base_llm_provider import BaseLLMProvider
 from app.config.settings import settings
+from app.core.interfaces.base_llm_provider import BaseLLMProvider
 
 
 class OllamaProvider(BaseLLMProvider):
@@ -15,22 +15,22 @@ class OllamaProvider(BaseLLMProvider):
 
     async def generate(
         self,
-        prompt: str,
-        **kwargs,
+        system_prompt: str,
+        user_prompt: str,
     ) -> str:
 
         response = ollama.chat(
             model=settings.ollama_model,
             messages=[
-                    {
-                        "role":"system",
-                        "content": system_prompt,
-                    },
-                    {
-                        "role":"user",
-                        "content": user_prompt,
-                    }
-                ]
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
         )
 
         return response["message"]["content"]
