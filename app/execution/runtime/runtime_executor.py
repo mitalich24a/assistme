@@ -20,9 +20,6 @@ class RuntimeExecutor:
         workflow: WorkflowDefinition,
         context: WorkflowContext,
     ) -> list[AgentResult]:
-        """
-        Execute all workflow steps sequentially.
-        """
 
         results: list[AgentResult] = []
 
@@ -33,6 +30,11 @@ class RuntimeExecutor:
                 capability=step.capability,
                 **step.input_data,
             )
+
+            #
+            # Merge agent output into workflow context
+            #
+            context.output_data.update(result.data)
 
             results.append(result)
 

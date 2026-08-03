@@ -29,15 +29,31 @@ class SprintPlanningWorkflow(BaseWorkflow):
         context: WorkflowContext,
     ) -> WorkflowDefinition:
 
+        steps = [
+            WorkflowStep(
+                name="Generate Sprint Plan",
+                capability=Capabilities.PLANNING,
+            ),
+        ]
+
+        #
+        # Optional publish step
+        #
+        if context.metadata.get("publish", False):
+            steps.append(
+                WorkflowStep(
+                    name="Publish Sprint Plan",
+                    capability=Capabilities.PUBLISHING,
+                )
+            )
+
+        print("Workflow Steps:")
+        for step in steps:
+            print(f" - {step.name} ({step.capability})")
+
         return WorkflowDefinition(
             name=self.name,
-            steps=[
-                WorkflowStep(
-                    name="Generate Sprint Plan",
-                    capability=Capabilities.PLANNING,
-                    input_data={},
-                ),
-            ],
+            steps=steps,
         )
 
     async def resume(

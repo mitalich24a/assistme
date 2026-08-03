@@ -55,7 +55,7 @@ class PlannerAgent(BaseAgent):
         return AgentResult(
             success=True,
             data={
-                "planning": planning.model_dump(),
-            },
+                    "planning": planning
+                },
             message="Planning completed successfully.",
         )

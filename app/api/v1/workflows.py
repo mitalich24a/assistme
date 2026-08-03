@@ -5,22 +5,18 @@ from fastapi import APIRouter, File, Form, UploadFile
 from app.core.dependencies import runtime_executor
 from app.document.document_service import DocumentService
 from app.execution.workflow_context import WorkflowContext
-from app.schemas.workflow_response import WorkflowResponse
 from app.utils.file_utils import FileUtils
 from app.workflows.sprint_planning_workflow import SprintPlanningWorkflow
 
 router = APIRouter()
 
 
-@router.post(
-    "/workflows/sprint-planning",
-    response_model=WorkflowResponse,
-)
+@router.post("/workflows/sprint-planning")
 async def sprint_planning(
     design_text: str | None = Form(default=None),
     document: UploadFile | None = File(default=None),
+    publish: bool = Form(default=False),
 ):
-
     #
     # Either pasted text OR uploaded document
     #
@@ -41,6 +37,9 @@ async def sprint_planning(
         input_data={
             "design_text": design_text,
         },
+        metadata={
+            "publish": publish,
+        },
     )
 
     workflow = SprintPlanningWorkflow()
@@ -54,11 +53,40 @@ async def sprint_planning(
         context=context,
     )
 
-    return WorkflowResponse(
-        workflow_id=context.workflow_id,
-        status="COMPLETED",
-        results=[
-            result.data
-            for result in results
-        ],
-    )
+    #
+    # Serialize Pydantic models
+    #
+    serialized_results = []
+
+    for result in results:
+
+        data = {}
+
+        for key, value in result.data.items():
+
+            if hasattr(value, "model_dump"):
+                data[key] = value.model_dump()
+
+            elif isinstance(value, list):
+
+                serialized = []
+
+                for item in value:
+
+                    if hasattr(item, "model_dump"):
+                        serialized.append(item.model_dump())
+                    else:
+                        serialized.append(item)
+
+                data[key] = serialized
+
+            else:
+                data[key] = value
+
+        serialized_results.append(data)
+
+    return {
+        "workflow_id": context.workflow_id,
+        "status": "COMPLETED",
+        "results": serialized_results,
+    }

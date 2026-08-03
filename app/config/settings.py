@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen3:8b"
 
     openai_api_key: str = ""
+    publish_provider: str = "github"
+    github_owner: str = ""
+    github_repo: str = ""
+    github_token: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

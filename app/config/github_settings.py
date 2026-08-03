@@ -1,0 +1,1 @@
+publish_provider: str = "github"

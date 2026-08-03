@@ -1,20 +1,27 @@
+from app.agents.planner_agent import PlannerAgent
+from app.agents.publisher_agent import PublisherAgent
 from app.coordinator.coordinator_agent import CoordinatorAgent
 from app.execution.runtime.runtime_executor import RuntimeExecutor
 from app.llm.factory import LLMFactory
-from app.agents.planner_agent import PlannerAgent
+from app.publishing.publishing_service import PublishingService
 from app.registry.agent_registry import AgentRegistry
 
-
 #
-# LLM
+# Providers
 #
 llm_provider = LLMFactory.create()
+
+publishing_service = PublishingService.create()
 
 #
 # Agents
 #
 planner_agent = PlannerAgent(
     llm_provider=llm_provider,
+)
+
+publisher_agent = PublisherAgent(
+    publishing_service=publishing_service,
 )
 
 #
@@ -24,6 +31,10 @@ agent_registry = AgentRegistry()
 
 agent_registry.register(
     planner_agent,
+)
+
+agent_registry.register(
+    publisher_agent,
 )
 
 #
