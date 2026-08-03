@@ -1,7 +1,7 @@
 from app.coordinator.coordinator_agent import CoordinatorAgent
 from app.execution.runtime.runtime_executor import RuntimeExecutor
 from app.llm.factory import LLMFactory
-from app.planner.planner_agent import PlannerAgent
+from app.agents.planner_agent import PlannerAgent
 from app.registry.agent_registry import AgentRegistry
 
 
