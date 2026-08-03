@@ -1,4 +1,4 @@
-What
+
   It is a modular multi-agent AI assistant platform that automates real-world workflows.
   It enables AI agents to
       Plan tasks
