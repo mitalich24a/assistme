@@ -17,26 +17,27 @@ class GitHubRestClient(BaseGitHubClient):
         issue: CreateIssueRequest,
     ) -> PublishedIssue:
 
+        print("=" * 60)
+        print("GitHubRestClient.create_issue()")
+        print("=" * 60)
+
         if not settings.github_token:
-            raise ValueError(
-                "GITHUB_TOKEN is not configured."
-            )
+            raise ValueError("GITHUB_TOKEN is not configured.")
 
         if not settings.github_owner:
-            raise ValueError(
-                "GITHUB_OWNER is not configured."
-            )
+            raise ValueError("GITHUB_OWNER is not configured.")
 
         if not settings.github_repo:
-            raise ValueError(
-                "GITHUB_REPO is not configured."
-            )
+            raise ValueError("GITHUB_REPO is not configured.")
 
         url = (
             f"https://api.github.com/repos/"
             f"{settings.github_owner}/"
             f"{settings.github_repo}/issues"
         )
+
+        print("URL:", url)
+        print("Repository:", settings.github_owner + "/" + settings.github_repo)
 
         headers = {
             "Authorization": f"Bearer {settings.github_token}",
@@ -48,7 +49,9 @@ class GitHubRestClient(BaseGitHubClient):
             "body": issue.body,
         }
 
-        async with httpx.AsyncClient() as client:
+        print("Calling GitHub...")
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
 
             response = await client.post(
                 url,
@@ -56,9 +59,14 @@ class GitHubRestClient(BaseGitHubClient):
                 json=payload,
             )
 
+        print("Status:", response.status_code)
+        print("Response:", response.text)
+
         response.raise_for_status()
 
         data = response.json()
+
+        print("Issue created:", data["html_url"])
 
         return PublishedIssue(
             title=data["title"],

@@ -8,6 +8,11 @@ from app.services.mcp_service import McpService
 class OllamaProvider(BaseLLMProvider):
 
     def __init__(self):
+
+        self._client = ollama.AsyncClient(
+            host=settings.ollama_base_url,
+        )
+
         self._mcp = McpService()
 
     @property
@@ -15,7 +20,8 @@ class OllamaProvider(BaseLLMProvider):
         return "ollama"
 
     #
-    # Used by Workflow Engine
+    # Workflow Engine
+    # (No MCP tools)
     #
     async def generate(
         self,
@@ -23,21 +29,25 @@ class OllamaProvider(BaseLLMProvider):
         user_prompt: str,
     ) -> str:
 
-        messages = [
-            {
-                "role": "system",
-                "content": system_prompt,
-            },
-            {
-                "role": "user",
-                "content": user_prompt,
-            },
-        ]
+        response = await self._client.chat(
+            model=settings.ollama_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+        )
 
-        return await self.chat(messages)
+        return response.message.content
 
     #
-    # Used by Agent Runtime
+    # Interactive Agent Runtime
+    # (MCP Tool Calling)
     #
     async def chat(
         self,
@@ -50,21 +60,15 @@ class OllamaProvider(BaseLLMProvider):
 
             while True:
 
-                response = ollama.chat(
+                response = await self._client.chat(
                     model=settings.ollama_model,
                     messages=messages,
                     tools=tools,
                 )
 
-                #
-                # Final response
-                #
                 if not response.message.tool_calls:
                     return response.message.content
 
-                #
-                # Remember assistant tool call
-                #
                 messages.append(
                     {
                         "role": "assistant",
@@ -81,9 +85,6 @@ class OllamaProvider(BaseLLMProvider):
                     }
                 )
 
-                #
-                # Execute requested tools
-                #
                 for tool_call in response.message.tool_calls:
 
                     tool_result = await session.call_tool(

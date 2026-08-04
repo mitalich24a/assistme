@@ -1,24 +1,42 @@
+from app.agents.workers.dependency_agent import DependencyAgent
+from app.agents.workers.review_agent import ReviewAgent
+from app.agents.workers.story_point_agent import StoryPointAgent
+from app.agents.workers.task_generator_agent import TaskGeneratorAgent
 from app.constants.capabilities import Capabilities
 from app.core.interfaces.base_agent import BaseAgent
 from app.core.interfaces.base_llm_provider import BaseLLMProvider
+from app.execution.retry_executor import RetryExecutor
 from app.execution.workflow_context import WorkflowContext
-from app.prompts.planner_prompt import PLANNER_SYSTEM_PROMPT
 from app.schemas.agent_result import AgentResult
-
-from app.schemas.planning_result import PlanningResult
-from app.utils.parsers.json_parser import JsonParser
 
 
 class PlannerAgent(BaseAgent):
     """
-    Generates an implementation plan from a design document.
+    Coordinates sprint planning using specialized worker agents.
     """
 
     def __init__(
         self,
         llm_provider: BaseLLMProvider,
     ) -> None:
-        self._llm_provider = llm_provider
+
+        self._retry = RetryExecutor()
+
+        self._task_generator = TaskGeneratorAgent(
+            llm_provider=llm_provider,
+        )
+
+        self._story_point_agent = StoryPointAgent(
+            llm_provider=llm_provider,
+        )
+
+        self._dependency_agent = DependencyAgent(
+            llm_provider=llm_provider,
+        )
+
+        self._review_agent = ReviewAgent(
+            llm_provider=llm_provider,
+        )
 
     @property
     def name(self) -> str:
@@ -26,7 +44,7 @@ class PlannerAgent(BaseAgent):
 
     @property
     def description(self) -> str:
-        return "Generates engineering implementation plans."
+        return "Coordinates sprint planning using specialized worker agents."
 
     @property
     def capabilities(self) -> list[str]:
@@ -42,20 +60,58 @@ class PlannerAgent(BaseAgent):
 
         design_text = context.input_data["design_text"]
 
-        response = await self._llm_provider.generate(
-            system_prompt=PLANNER_SYSTEM_PROMPT,
-            user_prompt=design_text,
+        print("=" * 70)
+        print("TaskGenerator START")
+        print("=" * 70)
+
+        planning = await self._retry.execute(
+            self._task_generator.run,
+            design_text,
         )
 
-        planning = JsonParser.parse(
-            response=response,
-            schema=PlanningResult,
+        print("TaskGenerator DONE")
+
+        print("=" * 70)
+        print("StoryPoint START")
+        print("=" * 70)
+
+        planning = await self._retry.execute(
+            self._story_point_agent.run,
+            planning,
         )
+
+        print("StoryPoint DONE")
+
+        print("=" * 70)
+        print("Dependency START")
+        print("=" * 70)
+
+        planning = await self._retry.execute(
+            self._dependency_agent.run,
+            planning,
+        )
+
+        print("Dependency DONE")
+
+        print("=" * 70)
+        print("Review START")
+        print("=" * 70)
+
+        planning = await self._retry.execute(
+            self._review_agent.run,
+            planning,
+        )
+
+        print("Review DONE")
+
+        print("=" * 70)
+        print("PlannerAgent COMPLETE")
+        print("=" * 70)
 
         return AgentResult(
             success=True,
             data={
-                    "planning": planning
-                },
+                "planning": planning,
+            },
             message="Planning completed successfully.",
         )

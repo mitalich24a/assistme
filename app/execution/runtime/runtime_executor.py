@@ -45,13 +45,22 @@ class RuntimeExecutor:
             if index < checkpoint.current_step:
                 continue
 
+            print("\n" + "=" * 70)
+            print(f"START STEP : {step.name}")
+            print("=" * 70)
+
             result = await self._coordinator.execute(
                 context=context,
                 capability=step.capability,
                 **step.input_data,
             )
 
+            print("=" * 70)
+            print(f"END STEP   : {step.name}")
+            print("=" * 70 + "\n")
+
             results.append(result)
+
             context.output_data.update(
                 result.data
             )
@@ -71,5 +80,9 @@ class RuntimeExecutor:
         self._checkpoint_manager.save(
             checkpoint,
         )
+
+        print("\n" + "=" * 70)
+        print("WORKFLOW COMPLETED")
+        print("=" * 70)
 
         return results

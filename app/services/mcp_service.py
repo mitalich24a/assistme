@@ -16,6 +16,10 @@ class McpService:
             ],
         )
 
-    def create_session(self) -> McpSession:
+    def create_session(
+        self,
+    ) -> McpSession:
 
-        return McpSession(self._server)
+        return McpSession(
+            self._server,
+        )
