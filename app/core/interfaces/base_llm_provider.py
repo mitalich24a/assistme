@@ -2,9 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class BaseLLMProvider(ABC):
-    """
-    Base interface for all LLM providers.
-    """
 
     @property
     @abstractmethod
@@ -17,18 +14,11 @@ class BaseLLMProvider(ABC):
         system_prompt: str,
         user_prompt: str,
     ) -> str:
-        """
-        Used by deterministic workflows.
-        """
         pass
 
     @abstractmethod
     async def chat(
         self,
         messages: list[dict],
-        tools: list[dict] | None = None,
-    ):
-        """
-        Used by the Agent Runtime.
-        """
+    ) -> str:
         pass

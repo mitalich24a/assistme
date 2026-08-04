@@ -1,19 +1,16 @@
-import json
-
 from app.agent_runtime.conversation import Conversation
-from app.agent_runtime.tool_registry import ToolRegistry
-from app.config.settings import settings
-import ollama
+from app.llm.ollama_provider import OllamaProvider
 
 
 class AgentExecutor:
     """
-    Executes an AI conversation with MCP tool support.
+    Executes an AI conversation.
+    MCP Host logic lives inside OllamaProvider.
     """
 
     def __init__(self):
 
-        self._tools = ToolRegistry()
+        self._llm = OllamaProvider()
 
     async def chat(
         self,
@@ -24,54 +21,10 @@ class AgentExecutor:
 
         conversation.user(message)
 
-        #
-        # Ask the LLM
-        #
-        response = ollama.chat(
-            model=settings.ollama_model,
-            messages=conversation.messages,
-            tools=self._tools.definitions(),
+        response = await self._llm.chat(
+            conversation.messages,
         )
 
-        #
-        # Did the LLM request any tools?
-        #
-        tool_calls = response["message"].get("tool_calls", [])
+        conversation.assistant(response)
 
-        while tool_calls:
-
-            for tool_call in tool_calls:
-
-                tool_name = tool_call["function"]["name"]
-
-                arguments = tool_call["function"]["arguments"]
-
-                tool_result = await self._tools.execute(
-                    tool_name,
-                    arguments,
-                )
-
-                conversation.tool(
-                    tool_name,
-                    str(tool_result),
-                )
-
-            #
-            # Ask the LLM again
-            #
-            response = ollama.chat(
-                model=settings.ollama_model,
-                messages=conversation.messages,
-                tools=self._tools.definitions(),
-            )
-
-            tool_calls = response["message"].get(
-                "tool_calls",
-                [],
-            )
-
-        answer = response["message"]["content"]
-
-        conversation.assistant(answer)
-
-        return answer
+        return response

@@ -2,24 +2,34 @@ from pydantic import BaseModel, Field
 
 
 class Conversation(BaseModel):
+    """
+    Maintains the conversation between
+    the user, assistant and tools.
+    """
 
     messages: list[dict] = Field(default_factory=list)
 
-    def user(self, message: str):
+    def user(
+        self,
+        content: str,
+    ):
 
         self.messages.append(
             {
                 "role": "user",
-                "content": message,
+                "content": content,
             }
         )
 
-    def assistant(self, message: str):
+    def assistant(
+        self,
+        content: str,
+    ):
 
         self.messages.append(
             {
                 "role": "assistant",
-                "content": message,
+                "content": content,
             }
         )
 

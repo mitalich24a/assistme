@@ -1,0 +1,9 @@
+{
+    "workflow_id": "402065a8-920a-4dbd-92c2-4a22d7bf09f7",
+    "current_step": 2,
+    "completed_steps": [
+        "Generate Sprint Plan",
+        "Publish Sprint Plan"
+    ],
+    "status": "COMPLETED"
+}
