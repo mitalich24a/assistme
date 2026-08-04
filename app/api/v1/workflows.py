@@ -33,7 +33,6 @@ async def sprint_planning(
 
     context = WorkflowContext(
         workflow_id=str(uuid.uuid4()),
-        workflow_name="SprintPlanning",
         input_data={
             "design_text": design_text,
         },

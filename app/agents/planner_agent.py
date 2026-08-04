@@ -60,53 +60,33 @@ class PlannerAgent(BaseAgent):
 
         design_text = context.input_data["design_text"]
 
-        print("=" * 70)
-        print("TaskGenerator START")
-        print("=" * 70)
-
         planning = await self._retry.execute(
             self._task_generator.run,
             design_text,
         )
-
-        print("TaskGenerator DONE")
-
-        print("=" * 70)
-        print("StoryPoint START")
-        print("=" * 70)
 
         planning = await self._retry.execute(
             self._story_point_agent.run,
             planning,
         )
 
-        print("StoryPoint DONE")
-
-        print("=" * 70)
-        print("Dependency START")
-        print("=" * 70)
-
         planning = await self._retry.execute(
             self._dependency_agent.run,
             planning,
         )
-
-        print("Dependency DONE")
-
-        print("=" * 70)
-        print("Review START")
-        print("=" * 70)
 
         planning = await self._retry.execute(
             self._review_agent.run,
             planning,
         )
 
-        print("Review DONE")
-
-        print("=" * 70)
-        print("PlannerAgent COMPLETE")
-        print("=" * 70)
+        #
+        # Save into workflow memory
+        #
+        context.memory.set(
+            "planning",
+            planning,
+        )
 
         return AgentResult(
             success=True,

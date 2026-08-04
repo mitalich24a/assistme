@@ -17,6 +17,7 @@ class PublisherAgent(BaseAgent):
         self,
         publishing_service: BasePublishingService,
     ) -> None:
+
         self._publishing_service = publishing_service
 
     @property
@@ -39,14 +40,17 @@ class PublisherAgent(BaseAgent):
         **kwargs,
     ) -> AgentResult:
 
-        print("=" * 60)
-        print("PublisherAgent is executing")
-        print("=" * 60)
-
-        planning: PlanningResult = context.output_data["planning"]
+        planning: PlanningResult = context.memory.get(
+            "planning",
+        )
 
         publish_result = await self._publishing_service.publish(
             planning,
+        )
+
+        context.memory.set(
+            "publish_result",
+            publish_result,
         )
 
         return AgentResult(

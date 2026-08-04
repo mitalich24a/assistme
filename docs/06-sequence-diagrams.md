@@ -1,68 +1,94 @@
-# Sequence Diagrams
+```text
+User
 
-## Sprint Planning Workflow
+ │
+ │ POST /sprint-planning
+ ▼
 
-```mermaid
-sequenceDiagram
+FastAPI
+ │
+ ▼
 
-participant User
-participant API as FastAPI
-participant WC as Workflow Controller
-participant Coordinator
-participant Planner
-participant AgentSaga
-participant GitHub
+Workflow Engine
+ │
+ ▼
 
-User->>API: Upload Design Document
+Runtime Executor
+ │
+ ▼
 
-API->>WC: Create Workflow
+Coordinator Agent
+ │
+ ▼
 
-WC->>AgentSaga: Start Workflow
+Planner Agent
+ │
+ ├──────────────────────────────────────────────┐
+ │                                              │
+ ▼                                              │
+Task Generator Agent                            │
+ │                                              │
+ │ generate()                                   │
+ ▼                                              │
+Ollama                                           │
+ │                                              │
+ ▼                                              │
+Planning Tasks                                  │
+ │                                              │
+ ▼                                              │
+Story Point Agent                               │
+ │                                              │
+ ▼                                              │
+Ollama                                           │
+ │                                              │
+ ▼                                              │
+Updated Tasks                                   │
+ │                                              │
+ ▼                                              │
+Dependency Agent                                │
+ │                                              │
+ ▼                                              │
+Ollama                                           │
+ │                                              │
+ ▼                                              │
+Updated Tasks                                   │
+ │                                              │
+ ▼                                              │
+Review Agent                                    │
+ │                                              │
+ ▼                                              │
+Ollama                                           │
+ │                                              │
+ ▼                                              │
+Final Planning Result                           │
+ │                                              │
+ └──────────────────────────────────────────────┘
+ │
+ ▼
 
-AgentSaga->>Coordinator: Execute
+Workflow Memory
+ │
+ ▼
 
-Coordinator->>Planner: Generate Plan
+Publisher Agent
+ │
+ ▼
 
-Planner-->>Coordinator: Execution Plan
+GitHub Publishing Service
+ │
+ ▼
 
-Coordinator->>GitHub: Create Issues (via MCP)
+GitHub REST API
+ │
+ ▼
 
-GitHub-->>Coordinator: Issues Created
+GitHub Issues Created
+ │
+ ▼
 
-Coordinator-->>AgentSaga: Workflow Completed
+Workflow Completed
+ │
+ ▼
 
-AgentSaga-->>WC: Success
-
-WC-->>API: Response
-
-API-->>User: Workflow Result
-```
-
----
-
-## Crash Recovery
-
-```mermaid
-sequenceDiagram
-
-participant AgentSaga
-participant Checkpoint
-participant GitHub
-
-AgentSaga->>GitHub: Create Issue 1
-GitHub-->>AgentSaga: Success
-
-AgentSaga->>Checkpoint: Save Progress
-
-AgentSaga->>GitHub: Create Issue 2
-
-Note over AgentSaga: Crash
-
-AgentSaga->>Checkpoint: Load State
-
-Checkpoint-->>AgentSaga: Resume From Issue 2
-
-AgentSaga->>GitHub: Continue Execution
-
-GitHub-->>AgentSaga: Success
+HTTP 200 Response
 ```
