@@ -4,6 +4,11 @@ class Capabilities:
     """
 
     PLANNING = "planning"
+
     ESTIMATION = "estimation"
+
     DEPENDENCY = "dependency"
+
     PUBLISHING = "publishing"
+
+    MCP = "mcp"

@@ -5,6 +5,7 @@ from app.execution.runtime.runtime_executor import RuntimeExecutor
 from app.llm.factory import LLMFactory
 from app.publishing.publishing_service import PublishingService
 from app.registry.agent_registry import AgentRegistry
+from app.agents.mcp_agent import McpAgent
 
 #
 # Providers
@@ -20,6 +21,8 @@ planner_agent = PlannerAgent(
     llm_provider=llm_provider,
 )
 
+mcp_agent = McpAgent()
+
 publisher_agent = PublisherAgent(
     publishing_service=publishing_service,
 )
@@ -31,6 +34,10 @@ agent_registry = AgentRegistry()
 
 agent_registry.register(
     planner_agent,
+)
+
+agent_registry.register(
+    mcp_agent,
 )
 
 agent_registry.register(

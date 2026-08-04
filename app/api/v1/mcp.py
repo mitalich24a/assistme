@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 
-from app.tools.tool_executor import ToolExecutor
+from app.constants.capabilities import Capabilities
+from app.core.dependencies import coordinator
+from app.execution.workflow_context import WorkflowContext
+from app.schemas.read_file_request import ReadFileRequest
 
 router = APIRouter()
 
@@ -8,17 +11,35 @@ router = APIRouter()
 @router.get("/mcp/tools")
 async def list_tools():
 
-    executor = ToolExecutor()
+    context = WorkflowContext(
+        workflow_id="mcp",
+        workflow_name="MCP",
+        input_data={},
+    )
 
-    tools = await executor.list_tools()
+    result = await coordinator.execute(
+        context=context,
+        capability=Capabilities.MCP,
+    )
 
-    return {
-        "count": len(tools.tools),
-        "tools": [
-            {
-                "name": tool.name,
-                "description": tool.description,
-            }
-            for tool in tools.tools
-        ],
-    }
+    return result.data["mcp"].model_dump()
+
+
+@router.post("/mcp/read-file")
+async def read_file(
+    request: ReadFileRequest,
+):
+
+    context = WorkflowContext(
+        workflow_id="mcp",
+        workflow_name="MCP",
+        input_data={},
+    )
+
+    result = await coordinator.execute(
+        context=context,
+        capability=Capabilities.MCP,
+        path=request.path,
+    )
+
+    return result.data

@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 
 class BaseLLMProvider(ABC):
     """
-    Base contract for all LLM providers.
+    Base interface for all LLM providers.
     """
 
     @property
     @abstractmethod
     def provider_name(self) -> str:
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     async def generate(
@@ -18,6 +18,17 @@ class BaseLLMProvider(ABC):
         user_prompt: str,
     ) -> str:
         """
-        Generate a response from the LLM.
+        Used by deterministic workflows.
         """
-        raise NotImplementedError
+        pass
+
+    @abstractmethod
+    async def chat(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+    ):
+        """
+        Used by the Agent Runtime.
+        """
+        pass

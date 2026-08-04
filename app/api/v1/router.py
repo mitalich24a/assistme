@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.workflows import router as workflow_router
 from app.api.v1.mcp import router as mcp_router
+from app.api.v1.agent import router as agent_router
 
 router = APIRouter()
 
@@ -11,4 +12,7 @@ router.include_router(
 
 router.include_router(
     mcp_router,
+)
+router.include_router(
+    agent_router,
 )

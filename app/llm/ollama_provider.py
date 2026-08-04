@@ -5,9 +5,6 @@ from app.core.interfaces.base_llm_provider import BaseLLMProvider
 
 
 class OllamaProvider(BaseLLMProvider):
-    """
-    Ollama implementation of BaseLLMProvider.
-    """
 
     @property
     def provider_name(self) -> str:
@@ -34,3 +31,19 @@ class OllamaProvider(BaseLLMProvider):
         )
 
         return response["message"]["content"]
+
+    async def chat(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+    ):
+
+        kwargs = {
+            "model": settings.ollama_model,
+            "messages": messages,
+        }
+
+        if tools:
+            kwargs["tools"] = tools
+
+        return ollama.chat(**kwargs)
