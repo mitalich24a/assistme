@@ -1,26 +1,25 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
-from app.agent_runtime.agent_executor import AgentExecutor
-from app.schemas.chat_request import ChatRequest
-from app.schemas.chat_response import ChatResponse
+from app.core.dependencies import agent_runtime
+
 
 router = APIRouter()
 
-executor = AgentExecutor()
+
+class AgentRequest(BaseModel):
+    prompt: str
 
 
-@router.post(
-    "/agent/chat",
-    response_model=ChatResponse,
-)
-async def chat(
-    request: ChatRequest,
+@router.post("/agent")
+async def run_agent(
+    request: AgentRequest,
 ):
 
-    response = await executor.chat(
-        request.message,
+    response = await agent_runtime.run(
+        request.prompt,
     )
 
-    return ChatResponse(
-        response=response,
-    )
+    return {
+        "response": response,
+    }

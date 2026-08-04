@@ -1,59 +1,38 @@
-from app.agents.planner_agent import PlannerAgent
-from app.agents.publisher_agent import PublisherAgent
-from app.coordinator.coordinator_agent import CoordinatorAgent
-from app.execution.runtime.runtime_executor import RuntimeExecutor
-from app.llm.factory import LLMFactory
-from app.publishing.publishing_service import PublishingService
-from app.registry.agent_registry import AgentRegistry
-from app.agents.mcp_agent import McpAgent
+from app.runtime.agent_runtime import AgentRuntime
+from app.tools.registry import Registry
 
 #
-# Providers
+# Local Tools
 #
-llm_provider = LLMFactory.create()
+from app.tools.filesystem.read_file import ReadFileTool
+from app.tools.github.create_issue import CreateGitHubIssueTool
 
-publishing_service = PublishingService.create()
-
-#
-# Agents
-#
-planner_agent = PlannerAgent(
-    llm_provider=llm_provider,
-)
-
-mcp_agent = McpAgent()
-
-publisher_agent = PublisherAgent(
-    publishing_service=publishing_service,
-)
 
 #
 # Registry
 #
-agent_registry = AgentRegistry()
+registry = Registry()
 
-agent_registry.register(
-    planner_agent,
+registry.register(
+    ReadFileTool(),
 )
 
-agent_registry.register(
-    mcp_agent,
+registry.register(
+    CreateGitHubIssueTool(),
 )
 
-agent_registry.register(
-    publisher_agent,
-)
 
 #
-# Coordinator
+# Agent Runtime
 #
-coordinator = CoordinatorAgent(
-    registry=agent_registry,
+agent_runtime = AgentRuntime(
+    registry=registry,
 )
 
-#
-# Runtime
-#
-runtime_executor = RuntimeExecutor(
-    coordinator=coordinator,
+registry.register(
+    ReadFileTool(),
+)
+
+registry.register(
+    CreateGitHubIssueTool(),
 )

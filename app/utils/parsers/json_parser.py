@@ -1,5 +1,6 @@
 import json
-from typing import Type, TypeVar
+from typing import Type
+from typing import TypeVar
 
 from pydantic import BaseModel
 
@@ -19,14 +20,49 @@ class JsonParser:
 
         response = response.strip()
 
-        if response.startswith("```json"):
-            response = response[7:]
+        #
+        # Remove markdown fences
+        #
+        response = (
+            response.replace("```json", "")
+            .replace("```", "")
+            .strip()
+        )
 
-        if response.endswith("```"):
-            response = response[:-3]
+        #
+        # Extract JSON object
+        #
+        start = response.find("{")
+        end = response.rfind("}")
 
-        response = response.strip()
+        if start == -1 or end == -1:
+            raise ValueError(
+                "No JSON object found in LLM response."
+            )
 
-        data = json.loads(response)
+        response = response[start : end + 1]
+
+        try:
+            data = json.loads(
+                response,
+                strict=False,
+            )
+
+        except json.JSONDecodeError:
+
+            #
+            # Common repair:
+            # remove unescaped control characters
+            #
+            cleaned = "".join(
+                ch
+                for ch in response
+                if ch >= " " or ch in "\n\r\t"
+            )
+
+            data = json.loads(
+                cleaned,
+                strict=False,
+            )
 
         return schema.model_validate(data)

@@ -1,60 +1,50 @@
 import uuid
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter
+from fastapi import File
+from fastapi import Form
+from fastapi import UploadFile
 
-from app.core.dependencies import runtime_executor
+from app.core.dependencies import workflow_manager
 from app.document.document_service import DocumentService
 from app.execution.workflow_context import WorkflowContext
 from app.utils.file_utils import FileUtils
-from app.workflows.sprint_planning_workflow import SprintPlanningWorkflow
 
 router = APIRouter()
 
 
-@router.post("/workflows/sprint-planning")
-async def sprint_planning(
+@router.post("/execute")
+async def execute(
+    user_request: str = Form(...),
     design_text: str | None = Form(default=None),
     document: UploadFile | None = File(default=None),
-    publish: bool = Form(default=False),
 ):
+
     #
-    # Either pasted text OR uploaded document
+    # Uploaded document
     #
     if document:
 
-        file_path = FileUtils.save(document)
+        file_path = FileUtils.save(
+            document,
+        )
 
-        design_text = DocumentService.extract(file_path)
-
-    if not design_text:
-        raise ValueError(
-            "Either design_text or document must be provided."
+        design_text = DocumentService.extract(
+            file_path,
         )
 
     context = WorkflowContext(
         workflow_id=str(uuid.uuid4()),
         input_data={
+            "user_request": user_request,
             "design_text": design_text,
         },
-        metadata={
-            "publish": publish,
-        },
     )
 
-    workflow = SprintPlanningWorkflow()
-
-    await workflow.validate(context)
-
-    definition = await workflow.build(context)
-
-    results = await runtime_executor.execute(
-        workflow=definition,
-        context=context,
+    results = await workflow_manager.execute(
+        context,
     )
 
-    #
-    # Serialize Pydantic models
-    #
     serialized_results = []
 
     for result in results:
@@ -64,22 +54,20 @@ async def sprint_planning(
         for key, value in result.data.items():
 
             if hasattr(value, "model_dump"):
+
                 data[key] = value.model_dump()
 
             elif isinstance(value, list):
 
-                serialized = []
-
-                for item in value:
-
-                    if hasattr(item, "model_dump"):
-                        serialized.append(item.model_dump())
-                    else:
-                        serialized.append(item)
-
-                data[key] = serialized
+                data[key] = [
+                    item.model_dump()
+                    if hasattr(item, "model_dump")
+                    else item
+                    for item in value
+                ]
 
             else:
+
                 data[key] = value
 
         serialized_results.append(data)
@@ -87,5 +75,8 @@ async def sprint_planning(
     return {
         "workflow_id": context.workflow_id,
         "status": "COMPLETED",
+        "workflow": context.memory.get(
+            "workflow",
+        ),
         "results": serialized_results,
     }
