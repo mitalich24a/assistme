@@ -8,7 +8,10 @@ from app.schemas.mcp_tool_result import McpToolResult
 
 class McpSession:
 
-    def __init__(self, server: StdioServerParameters):
+    def __init__(
+        self,
+        server: StdioServerParameters,
+    ):
 
         self._server = server
 
@@ -19,7 +22,9 @@ class McpSession:
 
     async def __aenter__(self):
 
-        self._client = stdio_client(self._server)
+        self._client = stdio_client(
+            self._server,
+        )
 
         streams = await self._client.__aenter__()
 
@@ -61,15 +66,33 @@ class McpSession:
 
         response = await self._session.list_tools()
 
-        return McpToolResult(
-            tools=[
+        tools = []
+
+        for tool in response.tools:
+
+            input_schema = getattr(
+                tool,
+                "inputSchema",
+                None,
+            )
+
+            if input_schema is None:
+                input_schema = getattr(
+                    tool,
+                    "input_schema",
+                    {},
+                )
+
+            tools.append(
                 McpTool(
                     name=tool.name,
                     description=tool.description or "",
-                    input_schema=tool.input_schema,
+                    input_schema=input_schema,
                 )
-                for tool in response.tools
-            ]
+            )
+
+        return McpToolResult(
+            tools=tools,
         )
 
     async def list_ollama_tools(self) -> list[dict]:

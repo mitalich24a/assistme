@@ -1,9 +1,13 @@
+import logging
+
 import httpx
 
 from app.config.settings import settings
 from app.core.interfaces.base_github_client import BaseGitHubClient
 from app.schemas.create_issue_request import CreateIssueRequest
 from app.schemas.published_issue import PublishedIssue
+
+logger = logging.getLogger(__name__)
 
 
 class GitHubRestClient(BaseGitHubClient):
@@ -17,9 +21,7 @@ class GitHubRestClient(BaseGitHubClient):
         issue: CreateIssueRequest,
     ) -> PublishedIssue:
 
-        print("=" * 60)
-        print("GitHubRestClient.create_issue()")
-        print("=" * 60)
+        logger.info("Creating GitHub issue")
 
         if not settings.github_token:
             raise ValueError("GITHUB_TOKEN is not configured.")
@@ -36,8 +38,11 @@ class GitHubRestClient(BaseGitHubClient):
             f"{settings.github_repo}/issues"
         )
 
-        print("URL:", url)
-        print("Repository:", settings.github_owner + "/" + settings.github_repo)
+        logger.info(
+            "Repository: %s/%s",
+            settings.github_owner,
+            settings.github_repo,
+        )
 
         headers = {
             "Authorization": f"Bearer {settings.github_token}",
@@ -49,8 +54,6 @@ class GitHubRestClient(BaseGitHubClient):
             "body": issue.body,
         }
 
-        print("Calling GitHub...")
-
         async with httpx.AsyncClient(timeout=30.0) as client:
 
             response = await client.post(
@@ -59,14 +62,19 @@ class GitHubRestClient(BaseGitHubClient):
                 json=payload,
             )
 
-        print("Status:", response.status_code)
-        print("Response:", response.text)
+        logger.info(
+            "GitHub response status: %s",
+            response.status_code,
+        )
 
         response.raise_for_status()
 
         data = response.json()
 
-        print("Issue created:", data["html_url"])
+        logger.info(
+            "Created GitHub issue #%s",
+            data["number"],
+        )
 
         return PublishedIssue(
             title=data["title"],

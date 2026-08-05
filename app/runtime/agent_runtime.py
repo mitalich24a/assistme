@@ -1,34 +1,25 @@
 import json
-import time
+from contextlib import AsyncExitStack
 
 from app.llm.ollama_provider import OllamaProvider
-from app.services.mcp_service import McpService
-from app.tools.hybrid_executor import HybridExecutor
-from app.tools.registry import Registry
+from app.mcp.client.client import McpClient
 
 
 class AgentRuntime:
 
-    def __init__(
-        self,
-        registry: Registry,
-    ):
+    def __init__(self):
 
-        self._provider = OllamaProvider()
-        self._registry = registry
-        self._executor = HybridExecutor(
-            registry,
-        )
-        self._mcp = McpService()
+        self._llm = OllamaProvider()
+        self._mcp = McpClient()
 
     async def run(
         self,
         prompt: str,
     ) -> str:
 
-        print("\n==============================")
+        print("\n" + "=" * 80)
         print("AGENT START")
-        print("==============================")
+        print("=" * 80)
 
         messages = [
             {
@@ -37,86 +28,72 @@ class AgentRuntime:
             }
         ]
 
-        async with self._mcp.create_session() as session:
+        async with AsyncExitStack() as stack:
 
-            print("\nLoading Local Tools...")
-
-            local_tools = self._registry.list()
-
-            print(
-                f"Local Tools: {len(local_tools)}"
-            )
-
-            print("\nLoading MCP Tools...")
-
-            start = time.time()
-
-            mcp_tools = await session.list_ollama_tools()
-
-            print(
-                f"MCP Tools: {len(mcp_tools)}"
-            )
-
-            print(
-                f"MCP Tool Load Time: {time.time()-start:.2f}s"
-            )
+            sessions = []
+            all_tools = []
 
             #
-            # TEMP
-            # Disable MCP tools for debugging
+            # Connect to every MCP server
             #
-            tools = local_tools
+            for session in self._mcp.sessions.all():
 
-            print(
-                f"\nTotal Tools Sent To LLM: {len(tools)}"
-            )
+                print(f"\nConnecting to MCP Server: {session.name}")
 
-            iteration = 1
-
-            while iteration <= 10:
-
-                print("\n------------------------------")
-                print(
-                    f"Iteration {iteration}"
+                mcp_session = await stack.enter_async_context(
+                    session,
                 )
-                print("------------------------------")
 
-                start = time.time()
+                sessions.append(
+                    (
+                        session.name,
+                        mcp_session,
+                    )
+                )
 
-                response = await self._provider.chat(
+                tools = await mcp_session.list_ollama_tools()
+
+                print(f"Discovered {len(tools)} tools")
+
+                for tool in tools:
+                    print(
+                        f"  - {tool['function']['name']}"
+                    )
+
+                all_tools.extend(
+                    tools,
+                )
+
+            print("\n" + "=" * 80)
+            print("TOTAL TOOLS SENT TO OLLAMA")
+            print("=" * 80)
+
+            for tool in all_tools:
+                print(tool["function"]["name"])
+
+            while True:
+
+                response = await self._llm.chat(
                     messages=messages,
-                    tools=tools,
+                    tools=all_tools,
                 )
 
-                print(
-                    f"LLM Time: {time.time()-start:.2f}s"
-                )
+                print("\n" + "=" * 80)
+                print("OLLAMA RESPONSE")
+                print("=" * 80)
+
+                print("Content:")
+                print(response.message.content)
+
+                print("\nTool Calls:")
+                print(response.message.tool_calls)
 
                 if not response.message.tool_calls:
 
-                    print(
-                        "\nNo Tool Calls."
-                    )
-
-                    print(
-                        "FINAL RESPONSE:"
-                    )
-
-                    print(
-                        response.message.content
-                    )
+                    print("\nFINAL RESPONSE")
+                    print(response.message.content)
 
                     return response.message.content
-
-                print(
-                    f"Tool Calls: {len(response.message.tool_calls)}"
-                )
-
-                for tc in response.message.tool_calls:
-
-                    print(
-                        f" -> {tc.function.name}"
-                    )
 
                 messages.append(
                     {
@@ -136,51 +113,72 @@ class AgentRuntime:
 
                 for tool_call in response.message.tool_calls:
 
-                    print(
-                        f"\nExecuting Tool: {tool_call.function.name}"
-                    )
+                    tool_name = tool_call.function.name
+                    arguments = tool_call.function.arguments
 
-                    start = time.time()
+                    print("\n" + "=" * 80)
+                    print("EXECUTING TOOL")
+                    print("=" * 80)
+                    print("Tool:", tool_name)
+                    print("Arguments:", arguments)
 
-                    result = await self._executor.execute(
-                        session=session,
-                        tool_name=tool_call.function.name,
-                        arguments=tool_call.function.arguments,
-                    )
+                    result = None
 
-                    print(
-                        f"Execution Time: {time.time()-start:.2f}s"
-                    )
+                    #
+                    # Find which MCP server owns this tool
+                    #
+                    for server_name, session in sessions:
 
-                    if isinstance(result, dict):
+                        tools = await session.list_tools()
 
-                        tool_output = json.dumps(
-                            result,
-                            indent=2,
+                        tool_names = {
+                            tool.name
+                            for tool in tools.tools
+                        }
+
+                        if tool_name in tool_names:
+
+                            print(
+                                f"Executing on server: {server_name}"
+                            )
+
+                            result = await session.call_tool(
+                                tool_name,
+                                arguments,
+                            )
+
+                            break
+
+                    if result is None:
+
+                        raise RuntimeError(
+                            f"Unknown tool: {tool_name}"
+                        )
+
+                    print("\nRaw Tool Result:")
+                    print(result)
+
+                    if result.content:
+
+                        tool_output = "\n".join(
+                            getattr(item, "text", str(item))
+                            for item in result.content
                         )
 
                     else:
 
-                        tool_output = ""
+                        tool_output = json.dumps(
+                            result.model_dump(),
+                            indent=2,
+                        )
 
-                        if (
-                            hasattr(result, "content")
-                            and result.content
-                        ):
-                            tool_output = (
-                                result.content[0].text
-                            )
+                    print("\nTool Output:")
+                    print(tool_output)
 
                     messages.append(
                         {
                             "role": "tool",
-                            "name": tool_call.function.name,
+                            "name": tool_name,
                             "content": tool_output,
                         }
                     )
-
-                iteration += 1
-
-        raise RuntimeError(
-            "Maximum tool iterations exceeded."
-        )
