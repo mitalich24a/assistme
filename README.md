@@ -1,243 +1,211 @@
 # AssistMe
 
-> AI Agent Framework powered by LLMs, MCP (Model Context Protocol), and Tool Calling.
+AssistMe is an extensible AI Agent Platform built with Python, FastAPI, Large Language Models (LLMs), and the Model Context Protocol (MCP).
 
-AssistMe is a modular AI agent platform built with **Python**, **FastAPI**, **Ollama**, and **MCP**. It enables Large Language Models to autonomously solve user requests by dynamically discovering and invoking both **local tools** and **MCP server tools**.
+The platform enables AI agents to autonomously understand user requests, discover available tools, invoke local and remote capabilities, and execute multi-step workflows.
 
-Instead of hardcoding workflows, the LLM acts as the reasoning engine while tools provide external capabilities such as file access, GitHub automation, document parsing, and more.
+It demonstrates how modern AI agents can be built using an LLM-driven reasoning loop, dynamic MCP tool discovery, and autonomous tool execution.
 
 ---
 
-# Features
+## Features
 
-- AI Agent Runtime
-- MCP Integration
-- Local Tool Registry
-- Hybrid Tool Execution
-- Ollama / Qwen Support
-- GitHub Integration
-- Document Processing
-- Extensible Plugin Architecture
+- LLM-driven AI Agent Runtime
+- Model Context Protocol (MCP) Client
+- Custom FastMCP Server
+- Dynamic MCP Tool Discovery
+- Autonomous Tool Execution
+- GitHub Issue Automation
+- Document Analysis
 - Async FastAPI Backend
+- Extensible Tool Architecture
 
 ---
 
-# Architecture
+## Architecture
 
 ```
-                    User
-                      │
-                      ▼
-                Agent Runtime
-                      │
-                      ▼
-              Ollama (Qwen)
-                      │
-              Tool Calling Loop
-                      │
-         ┌────────────┴────────────┐
-         ▼                         ▼
-   Local Tool Registry        MCP Servers
-         │                         │
-         ▼                         ▼
-    Read File               GitHub MCP
-    Read PDF                Filesystem MCP
-    Read DOCX               Future MCP Servers
-         │
-         └────────────┬────────────┘
-                      ▼
-                Tool Results
-                      │
-                      ▼
-                   Ollama
-```
-
----
-
-# Project Structure
-
-```
-app/
-│
-├── api/
-├── bootstrap/
-├── config/
-├── core/
-├── document/
-├── exceptions/
-├── github/
-├── llm/
-├── mcp/
-├── memory/
-├── runtime/
-├── tools/
-├── services/
-├── prompts/
-├── publishing/
-├── schemas/
-└── utils/
+                 +----------------------+
+                 |      FastAPI API     |
+                 +----------+-----------+
+                            |
+                            v
+                 +----------------------+
+                 |    Agent Runtime     |
+                 +----------+-----------+
+                            |
+                +-----------+-----------+
+                |                       |
+                v                       v
+          Ollama / Qwen            MCP Client
+                                       |
+                    +------------------+------------------+
+                    |                                     |
+                    v                                     v
+          Filesystem MCP Server              AssistMe MCP Server
+                                                     |
+                            +------------------------+------------------------+
+                            |                         |                        |
+                            v                         v                        v
+                      Read File              Create Sprint Plan      Create GitHub Issue
 ```
 
 ---
 
-# Core Components
+## Components
 
-## Agent Runtime
+### Agent Runtime
 
-The Agent Runtime manages the complete reasoning loop.
+The Agent Runtime orchestrates the complete reasoning workflow by:
 
-Responsibilities:
-
-- Maintains conversation history
-- Opens MCP sessions
-- Discovers available tools
-- Sends tool definitions to the LLM
-- Executes requested tools
-- Returns tool results back to the LLM
-- Continues until a final response is generated
+- Managing conversation history
+- Connecting to multiple MCP servers
+- Discovering available tools dynamically
+- Executing tool calls requested by the LLM
+- Feeding tool results back to the LLM
+- Returning the final response
 
 ---
 
-## Local Tools
+### MCP Client
 
-Local tools provide capabilities implemented inside AssistMe.
+The MCP Client is responsible for:
 
-Examples:
+- Connecting to multiple MCP servers
+- Managing MCP sessions
+- Discovering available tools
+- Routing tool execution to the appropriate MCP server
+
+---
+
+### MCP Server
+
+The custom FastMCP server exposes reusable AI tools.
+
+Current tools include:
 
 - Read File
-- Read PDF
-- Read DOCX
+- Create Sprint Plan
 - Create GitHub Issue
-- List GitHub Issues
 
-Adding a new capability only requires implementing `BaseTool` and registering it.
-
----
-
-## MCP Integration
-
-AssistMe supports Model Context Protocol (MCP).
-
-During execution it automatically discovers tools exposed by connected MCP servers.
-
-Examples:
-
-- Filesystem
-- GitHub
-- Future integrations (Jira, Slack, Browser, etc.)
+New tools can be added without modifying the Agent Runtime.
 
 ---
 
-## Hybrid Tool Execution
+### GitHub Integration
 
-When the LLM requests a tool:
+Current capabilities:
 
-- Local tools execute inside AssistMe.
-- MCP tools execute through an MCP server.
+- Create GitHub Issues
 
-The LLM does not need to know where a tool is implemented.
+Planned capabilities:
 
----
-
-## LLM Provider
-
-Current provider:
-
-- Ollama
-- Qwen3
-
-The provider is isolated behind an abstraction layer, allowing future support for OpenAI, Anthropic, Gemini, and other models.
+- List Issues
+- Update Issues
+- Close Issues
+- Pull Request Automation
 
 ---
 
-# Example
+### Document Processing
 
-User prompt:
+Supported document formats:
+
+- Markdown
+- Text
+- PDF
+- DOCX
+
+---
+
+## Example Workflow
 
 ```
-Read requirements.md and create GitHub Issues.
-```
-
-Execution:
-
-```
-User
-    │
-    ▼
-LLM
-    │
-    ▼
+User Prompt
+      |
+      v
+Read README.md and create GitHub issues
+      |
+      v
+Agent Runtime
+      |
+      v
 read_file()
-    │
-    ▼
-LLM
-    │
-    ▼
+      |
+      v
+LLM analyzes project requirements
+      |
+      v
+create_sprint_plan()
+      |
+      v
 create_github_issue()
-    │
-    ▼
-Done
+      |
+      v
+GitHub Repository
 ```
-
-No predefined workflow is required—the LLM determines which tools to invoke.
 
 ---
 
-# Technology Stack
+## Tech Stack
 
 - Python 3.10+
 - FastAPI
-- AsyncIO
+- FastMCP
 - Ollama
 - Qwen3
-- MCP (Model Context Protocol)
+- MCP Python SDK
 - Pydantic
 - HTTPX
+- AsyncIO
 
 ---
 
-# Getting Started
+## Current Capabilities
 
-Clone the repository:
+- Read project documentation
+- Analyze software requirements
+- Generate engineering task plans
+- Create GitHub issues automatically
+- Discover MCP tools dynamically
+- Execute multi-step AI workflows
 
-```bash
-git clone <repo-url>
-cd assistme
-```
+---
 
-Create a virtual environment:
+## Roadmap
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+- Conversation Memory
+- Retrieval-Augmented Generation (RAG)
+- HTTP/SSE MCP Transport
+- Multi-Agent Collaboration
+- GitHub Pull Request Automation
+- Jira Integration
+- Slack Integration
+- Vector Database Support
+- Authentication & Authorization
+- Plugin Marketplace
 
-Install dependencies:
+---
 
-```bash
-pip install -r requirements.txt
-```
-
-Configure environment variables:
-
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen3:8b
-
-GITHUB_OWNER=<owner>
-GITHUB_REPO=<repo>
-GITHUB_TOKEN=<token>
-```
-
-Run the application:
-
-```bash
-python run.py
-```
-
-Open Swagger:
+## Project Structure
 
 ```
-http://localhost:8000/docs
+app/
+├── api/                # FastAPI endpoints
+├── bootstrap/          # Startup and dependency management
+├── config/             # Configuration and settings
+├── core/               # Core interfaces and dependencies
+├── document/           # Document readers and processing
+├── exceptions/         # Custom exceptions
+├── github/             # GitHub REST integration
+├── llm/                # LLM providers
+├── mcp/
+│   ├── client/         # MCP client
+│   ├── server/         # FastMCP server
+│   └── mcp_session.py
+├── prompts/            # System prompts
+├── runtime/            # AI Agent Runtime
+├── schemas/            # Pydantic models
+└── utils/              # Utility functions
 ```
 
