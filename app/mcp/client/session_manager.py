@@ -1,5 +1,6 @@
 from app.mcp.client.session import Session
 
+
 class SessionManager:
 
     def __init__(self):
@@ -24,7 +25,9 @@ class SessionManager:
 
         return self._sessions[name]
 
-    def all(self) -> list[Session]:
+    def all(
+        self,
+    ) -> list[Session]:
 
         return list(
             self._sessions.values()

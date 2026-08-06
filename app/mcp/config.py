@@ -1,23 +1,44 @@
-from mcp import StdioServerParameters
+from enum import Enum
+
+from pydantic import BaseModel
 
 
-SERVERS = {
+class McpTransport(str, Enum):
 
-    "assistme": StdioServerParameters(
-        command="python",
-        args=[
+    STDIO = "stdio"
+
+    HTTP = "http"
+
+
+class McpServerConfig(BaseModel):
+
+    name: str
+
+    transport: McpTransport = McpTransport.STDIO
+
+    command: list[str] | None = None
+
+    url: str | None = None
+
+
+SERVERS = [
+    McpServerConfig(
+        name="assistme",
+        transport=McpTransport.STDIO,
+        command=[
+            "python",
             "-m",
             "app.mcp.server.server",
         ],
     ),
-
-    "filesystem": StdioServerParameters(
-        command="npx",
-        args=[
+    McpServerConfig(
+        name="filesystem",
+        transport=McpTransport.STDIO,
+        command=[
+            "npx",
             "-y",
             "@modelcontextprotocol/server-filesystem",
             ".",
         ],
     ),
-
-}
+]

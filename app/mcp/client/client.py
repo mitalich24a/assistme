@@ -6,18 +6,11 @@ class McpClient:
 
     def __init__(self):
 
-        self._manager = SessionManager()
+        self.sessions = SessionManager()
 
-        for name, server in SERVERS.items():
+        for server in SERVERS:
 
-            self._manager.register(
-                name,
-                server,
+            self.sessions.register(
+                name=server.name,
+                server=server,
             )
-
-    @property
-    def sessions(
-        self,
-    ) -> SessionManager:
-
-        return self._manager

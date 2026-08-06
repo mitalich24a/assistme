@@ -4,11 +4,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+
     #
     # Application
     #
     app_name: str = "AssistMe"
+
     app_version: str = "0.1.0"
+
     debug: bool = True
 
     #
@@ -17,6 +20,7 @@ class Settings(BaseSettings):
     llm_provider: str = "ollama"
 
     ollama_base_url: str = "http://localhost:11434"
+
     ollama_model: str = "qwen3:8b"
 
     openai_api_key: str = ""
@@ -35,6 +39,15 @@ class Settings(BaseSettings):
     github_token: str = ""
 
     #
+    # MCP
+    #
+    mcp_transport: str = "stdio"
+
+    mcp_host: str = "0.0.0.0"
+
+    mcp_port: int = 9000
+
+    #
     # Environment
     #
     model_config = SettingsConfigDict(
@@ -45,6 +58,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+
     return Settings()
 
 
