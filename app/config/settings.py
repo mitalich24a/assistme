@@ -41,10 +41,9 @@ class Settings(BaseSettings):
     #
     # MCP
     #
-    mcp_transport: str = "stdio"
 
-    mcp_host: str = "0.0.0.0"
-
+    mcp_transport: str = "http"      # stdio | http
+    mcp_host: str = "127.0.0.1"
     mcp_port: int = 9000
 
     #

@@ -58,7 +58,8 @@ class Session:
 
         streams = await self._client.__aenter__()
 
-        self._read_stream, self._write_stream = streams
+        self._read_stream = streams[0]
+        self._write_stream = streams[1]
 
         self._session = ClientSession(
             self._read_stream,
